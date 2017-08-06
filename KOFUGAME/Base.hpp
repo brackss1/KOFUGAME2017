@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <random>
 #include <type_traits>
+#include <queue>
 
 enum class State
 {

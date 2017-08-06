@@ -99,6 +99,8 @@ public:
 
 	void setList(const GhostList& _list) {
 
+		removedlist.clear();
+
 		gFont = Font(blockSize);
 
 		good = bad = 4;

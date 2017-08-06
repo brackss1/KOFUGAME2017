@@ -118,6 +118,29 @@ public:
 				indicies.emplace_back(i);
 		}
 
+		for (const auto& x : opponent) {
+			if (x.getFlag() == GhostFlag::Good) {
+				for (int i : indicies) {
+					if (it->getPos() + Point(dx[i], dy[i]) == x.getPos()) {
+
+						it->setPos(it->getPos() + Point(dx[i], dy[i]));
+
+						return;
+					}
+				}
+			}
+			else {
+				for (int i : indicies) {
+					if (it->getPos() + Point(dx[i], dy[i]) == x.getPos() && rng() % 4 != 0) {
+
+						it->setPos(it->getPos() + Point(dx[i], dy[i]));
+
+						return;
+					}
+				}
+			}
+		}
+
 		if (it->getFlag() == GhostFlag::Good) {
 
 			int tmp, dis = 11;
@@ -143,7 +166,19 @@ public:
 
 		else {
 
-			int res = indicies.at(rng() % indicies.size());
+			int res, min = 11;
+
+			for (int i : indicies) {
+
+				int tmp = searchOpp(it->getPos() + Point(dx[i], dy[i]));
+
+				if (min > tmp) {
+
+					min = tmp;
+
+					res = i;
+				}
+			}
 
 			it->setPos(it->getPos() + Point(dx[res], dy[res]));
 		}
@@ -170,6 +205,51 @@ private:
 	Point nextGarbagePos() const override {
 
 		return Point(-1, removedlist.size());
+	}
+
+	int searchOpp(Point _pos) {
+
+		const int INF = 11;
+
+		int d[6][6];
+
+		for (int i = 0; i < 6; ++i) {
+			for (int j = 0; j < 6; ++j)
+				d[i][j] = INF;
+		}
+
+		std::queue<Point> que;
+
+		d[_pos.y][_pos.x] = 0;
+
+		que.emplace(_pos);
+
+		while (!que.empty()) {
+
+			Point p = que.front();
+
+			que.pop();
+
+			for (const auto& x : opponent) {
+				if (p == x.getPos())
+					return d[p.y][p.x];
+			}
+
+			for (int i = 0; i < 4; ++i) {
+
+				int nx = p.x + dx[i];
+
+				int ny = p.y + dy[i];
+
+				if (0 <= nx&&nx < 6 && 0 <= ny&&ny < 6 && d[ny][nx] == INF) {
+
+					d[ny][nx] = d[p.y][p.x] + 1;
+
+					que.emplace(nx, ny);
+				}
+			}
+		}
+		return INF;
 	}
 };
 

@@ -108,7 +108,7 @@ public:
 
 			if (arr[i])
 				Circle(getRealPos(userGhostList[i].getPos()), r)
-				.draw((userGhostList[i].getFlag() == GhostFlag::Good) ? Palette::Aqua : Palette::Plum);
+				.draw((userGhostList[i].getFlag() == GhostFlag::Good) ? Color(L"#6633FF") : Color(L"#CC0033"));
 			else
 				Circle(getRealPos(userGhostList[i].getPos()), r)
 				.drawFrame(2, 0, Palette::White);
