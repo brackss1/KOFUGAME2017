@@ -8,17 +8,26 @@ std::array<std::array<Vec2, 6>, 6> translateBoard;
 
 class DrawGhost {
 
+	static TextureRegion red, white, blue;
+
 public:
 
-	DrawGhost() = default;
+	static void init() {
+
+		red = Texture(L"pictures/red.png").resize(blockSize, blockSize);
+
+		blue = Texture(L"pictures/blue.png").resize(blockSize, blockSize);
+
+		white = Texture(L"pictures/white.png").resize(blockSize, blockSize);
+	}
 
 	static void draw(Turn play, const GhostList& ghostList) {
 
 		for (const auto& ghost : ghostList) {
 			if (play == Turn::Player)
-				Circle(getRealPos(ghost.getPos()), blockSize / 2).draw(getColor(ghost.getFlag()));
+				getTexture(ghost.getFlag()).drawAt(getRealPos(ghost.getPos()));
 			else
-				Circle(getRealPos(ghost.getPos()), blockSize / 2).draw(Palette::White);
+				white.drawAt(getRealPos(ghost.getPos()));
 		}
 	}
 
@@ -30,14 +39,16 @@ public:
 
 private:
 
-	static Color getColor(const GhostFlag flag) {
+	static TextureRegion getTexture(const GhostFlag flag) {
 
 		if (flag == GhostFlag::Good)
-			return Palette::Aqua;
+			return blue;
 		else
-			return Palette::Plum;
+			return red;
 	}
 };
+
+TextureRegion DrawGhost::red, DrawGhost::blue, DrawGhost::white;
 
 class DrawBoard {
 

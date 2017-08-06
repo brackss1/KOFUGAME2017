@@ -16,8 +16,6 @@ public:
 
 	void init() override {
 
-		DrawBoard::init();
-
 		player.setList(userGhostList);
 
 		player.init();

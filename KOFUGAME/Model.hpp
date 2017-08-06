@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Base.hpp"
+#include "View.hpp"
 
 class Game {
 
@@ -15,6 +16,10 @@ public:
 		state = State::Title;
 
 		scenes.at(state)->init();
+
+		DrawBoard::init();
+
+		DrawGhost::init();
 	}
 
 	static void changeScene(State _state) {

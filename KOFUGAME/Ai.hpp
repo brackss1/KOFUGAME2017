@@ -44,6 +44,8 @@ public:
 
 	void setList() {
 
+		removedlist.clear();
+
 		good = bad = 4;
 
 		int _good = 4, _bad = 4;
@@ -151,14 +153,9 @@ public:
 
 	void draw() const override {
 
-		Log << L"call";
-
-		for (const auto& x : list)
-			Log << x.getPos();
+		DrawGhost::draw(Turn::Player, removedlist);
 
 		DrawGhost::draw(Turn::Com, list);
-
-		font(L"Â", good, L":Ô", bad).drawAt(Window::Center().x - blockSize * 4, Window::Center().y - blockSize * 2, Palette::Black);
 	}
 
 	Goal getGoal() const { return goal; }
@@ -168,6 +165,11 @@ private:
 	int disTo(const Point& _pos,const Point& target) {
 
 		return (target - _pos).x + (target - _pos).y;
+	}
+
+	Point nextGarbagePos() const override {
+
+		return Point(-1, removedlist.size());
 	}
 };
 

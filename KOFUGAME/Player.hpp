@@ -67,11 +67,13 @@ public:
 	}
 
 	void draw() const override {
-		
+
+		DrawGhost::draw(Turn::Player, removedlist);
+
 		DrawGhost::draw(Turn::Player, list);
 
 		for (const auto& x : goal)
-			gFont(L"Å™").drawAt(DrawGhost::getRealPos(x), Palette::Red);
+			gFont(L"Å™").drawAt(DrawGhost::getRealPos(x), Color(255, 0, 0, 100));
 
 		if (moveFlag) {
 
@@ -93,7 +95,6 @@ public:
 		Circle(DrawGhost::getRealPos(currentIt->getPos()), blockSize / 2)
 			.drawFrame(5, 0, (moveFlag) ? Palette::Greenyellow : Palette::Yellow);
 
-		font(L"ê¬",good,L":ê‘",bad).drawAt(Window::Center().x + blockSize * 4, Window::Center().y + blockSize * 2, Palette::Black);
 	}
 
 	void setList(const GhostList& _list) {
@@ -165,6 +166,11 @@ private:
 		}
 
 		return false;
+	}
+
+	Point nextGarbagePos() const override {
+
+		return Point(6, 5 - removedlist.size());
 	}
 };
 
