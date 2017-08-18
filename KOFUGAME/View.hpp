@@ -21,20 +21,33 @@ public:
 		white = Texture(L"pictures/white.png").resize(blockSize, blockSize);
 	}
 
-	static void draw(Turn play, const GhostList& ghostList) {
+	static void draw(Turn play, const GhostInfo& ghost) {
 
-		for (const auto& ghost : ghostList) {
-			if (play == Turn::Player)
-				getTexture(ghost.getFlag()).drawAt(getRealPos(ghost.getPos()));
-			else
-				white.drawAt(getRealPos(ghost.getPos()));
-		}
+		if (play == Turn::Player)
+			getTexture(ghost.getFlag()).drawAt(getRealPos(ghost.getPos()));
+		else
+			white.drawAt(getRealPos(ghost.getPos()));
 	}
 
-	static Vec2 getRealPos(const Point& _pos) {
+	static Vec2 getRealPos(const Vec2& _pos) {
 
 		return Vec2(Window::Center().x - blockSize * 3 + _pos.x*blockSize + blockSize / 2,
 			Window::Center().y-blockSize*3+_pos.y*blockSize + blockSize / 2);
+	}
+
+	static TextureRegion getTextureWhite() {
+
+		return white;
+	}
+
+	static TextureRegion getTextureBlue() {
+
+		return blue;
+	}
+
+	static TextureRegion getTextureRed() {
+
+		return red;
 	}
 
 private:

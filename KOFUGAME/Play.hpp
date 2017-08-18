@@ -12,15 +12,23 @@ class Play : public Scene {
 
 	Com com;
 
+	Optional<std::pair<Point,Point>> opt;
+
+	double motionT;
+
 public:
 
 	void init() override {
+
+		motionT = 30.0;
 
 		player.setList(userGhostList);
 
 		player.init();
 
 		com.setList();
+
+		opt = none;
 
 		turn = Turn::Player;
 	}
@@ -36,26 +44,47 @@ public:
 
 	void update() override {
 
-		if (turn == Turn::Player) {
+		if (!opt.has_value()) {
 
-			player.update();
+			if (turn == Turn::Player) {
 
-			com.init(player.getList());
+				player.update();
 
-			com.clearPiece(player.getList());
+				com.init(player.getList());
+
+				opt = com.clearPiece(player.getList());
+			}
+
+			else {
+
+				com.update();
+
+				player.init();
+
+				opt = player.clearPiece(com.getList());
+			}
+
+			playerWin();
+
+			comWin();
+
+			motionT = 30.0;
 		}
+
 		else {
 
-			com.update();
+			if (turn == Turn::Player)
+				player.update();
+			else
+				com.update();
 
-			player.init();
+			Turn tmp = (turn == Turn::Player) ? Turn::Com : Turn::Player;
 
-			player.clearPiece(com.getList());
+			if (motionG(motionT, opt->first, opt->second, tmp,
+				(tmp == Turn::Player) ? player.getrRemovedList().back().getFlag() : GhostFlag::Good)) {
+				opt = none;
+			}
 		}
-
-		playerWin();
-
-		comWin();
 	}
 
 private:

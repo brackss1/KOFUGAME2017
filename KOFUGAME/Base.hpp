@@ -9,6 +9,7 @@
 #include <random>
 #include <type_traits>
 #include <queue>
+#include <optional>
 
 enum class State
 {

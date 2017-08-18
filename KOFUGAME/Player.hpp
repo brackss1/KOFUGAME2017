@@ -4,8 +4,6 @@
 
 class Player : public Member {
 
-	GhostList::iterator currentIt;
-
 	std::mt19937 rng;
 
 	bool moveFlag = false;
@@ -20,11 +18,15 @@ public:
 
 	void init() {
 
+		currentIt = list.begin();
+
+		motionF = false;
+
+		motionT = 30;
+
 		moveFlag = false;
 
 		moveKey = -1;
-
-		currentIt = list.begin();
 
 		KeyConfig tmp;
 
@@ -52,25 +54,41 @@ public:
 
 	void update() override {
 
-		if (KeyZ.down())
-			moveFlag = true;
+		if (!motionF) {
+			if (KeyZ.down()) {
 
-		else if (KeyX.down())
-			moveFlag = false;
+				prev = currentIt->getPos();
 
-		if (moveFlag) {
-			if (moveGhost())
+				moveFlag = true;
+			}
+
+			else if (KeyX.down())
+				moveFlag = false;
+
+			if (moveFlag) {
+				if (moveGhost())
+					motionF = true;
+			}
+			else
+				selectGhost();
+		}
+
+		else {
+
+			if (motion(prev, currentIt->getPos(), Turn::Player, currentIt->getFlag()))
 				turn = Turn::Com;
 		}
-		else
-			selectGhost();
 	}
 
 	void draw() const override {
 
-		DrawGhost::draw(Turn::Player, removedlist);
+		for (const auto& x : removedlist)
+			DrawGhost::draw(Turn::Player, x);
 
-		DrawGhost::draw(Turn::Player, list);
+		for (const auto& x : list) {
+			if (!motionF || (motionF&&x.getPos() != currentIt->getPos()))
+				DrawGhost::draw(Turn::Player, x);
+		}
 
 		for (const auto& x : goal)
 			gFont(L"Å™").drawAt(DrawGhost::getRealPos(x), Color(255, 0, 0, 100));

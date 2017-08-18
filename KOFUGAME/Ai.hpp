@@ -14,6 +14,10 @@ public:
 
 	void init(const GhostList& _list) {
 
+		motionF = false;
+
+		motionT = 30;
+
 		opponent = _list;
 
 		KeyConfig tmp;
@@ -96,101 +100,122 @@ public:
 
 	void update() override {
 
-		std::vector<GhostList::iterator> vec;
+		if (!motionF) {
 
-		for (auto it = list.begin(); it != list.end(); ++it) {
+			std::vector<GhostList::iterator> vec;
 
-			if (checkUsableGhost(it->getKeyConfig()))
-				vec.emplace_back(it);
-		}
+			for (auto it = list.begin(); it != list.end(); ++it) {
 
-		auto it = vec.at(rng() % vec.size());
+				if (checkUsableGhost(it->getKeyConfig()))
+					vec.emplace_back(it);
+			}
 
-		std::vector<int> indicies;
+			auto it = vec.at(rng() % vec.size());
 
-		for (int i = 0; i < 4; ++i) {
+			std::vector<int> indicies;
 
-			Point p = it->getPos() + Point(dx[i], dy[i]);
+			for (int i = 0; i < 4; ++i) {
 
-			if (checkKey(p) &&
-				0 <= p.x&&p.x < 6 &&
-				0 <= p.y&&p.y < 6)
-				indicies.emplace_back(i);
-		}
+				Point p = it->getPos() + Point(dx[i], dy[i]);
 
-		for (const auto& x : opponent) {
-			if (x.getFlag() == GhostFlag::Good) {
-				for (int i : indicies) {
-					if (it->getPos() + Point(dx[i], dy[i]) == x.getPos()) {
+				if (checkKey(p) &&
+					0 <= p.x&&p.x < 6 &&
+					0 <= p.y&&p.y < 6)
+					indicies.emplace_back(i);
+			}
 
-						it->setPos(it->getPos() + Point(dx[i], dy[i]));
+			for (const auto& x : opponent) {
+				if (x.getFlag() == GhostFlag::Good) {
+					for (int i : indicies) {
+						if (it->getPos() + Point(dx[i], dy[i]) == x.getPos()) {
 
-						return;
+							it->setPos(it->getPos() + Point(dx[i], dy[i]));
+
+							return;
+						}
+					}
+				}
+				else {
+					for (int i : indicies) {
+						if (it->getPos() + Point(dx[i], dy[i]) == x.getPos() && rng() % 4 != 0) {
+
+							it->setPos(it->getPos() + Point(dx[i], dy[i]));
+
+							return;
+						}
 					}
 				}
 			}
+
+			if (it->getFlag() == GhostFlag::Good) {
+
+				int tmp, dis = 11;
+
+				for (int i : indicies) {
+
+					if (dis > std::min(disTo(it->getPos() + Point(dx[i], dy[i]), goal[0]),
+						disTo(it->getPos() + Point(dx[i], dy[i]), goal[1]))) {
+
+						dis = std::min(disTo(it->getPos() + Point(dx[i], dy[i]), goal[0]),
+							disTo(it->getPos() + Point(dx[i], dy[i]), goal[1]));
+
+						tmp = i;
+					}
+				}
+
+				indicies.emplace_back(tmp);
+
+				int res = indicies.at(rng() % indicies.size());
+
+				prev = it->getPos();
+
+				it->setPos(it->getPos() + Point(dx[res], dy[res]));
+
+				currentIt = it;
+			}
+
 			else {
+
+				int res, min = 11;
+
 				for (int i : indicies) {
-					if (it->getPos() + Point(dx[i], dy[i]) == x.getPos() && rng() % 4 != 0) {
 
-						it->setPos(it->getPos() + Point(dx[i], dy[i]));
+					int tmp = searchOpp(it->getPos() + Point(dx[i], dy[i]));
 
-						return;
+					if (min > tmp) {
+
+						min = tmp;
+
+						res = i;
 					}
 				}
-			}
-		}
 
-		if (it->getFlag() == GhostFlag::Good) {
+				prev = it->getPos();
 
-			int tmp, dis = 11;
+				it->setPos(it->getPos() + Point(dx[res], dy[res]));
 
-			for (int i : indicies) {
-
-				if (dis > std::min(disTo(it->getPos() + Point(dx[i], dy[i]), goal[0]),
-					disTo(it->getPos() + Point(dx[i], dy[i]), goal[1]))) {
-
-					dis = std::min(disTo(it->getPos() + Point(dx[i], dy[i]), goal[0]),
-						disTo(it->getPos() + Point(dx[i], dy[i]), goal[1]));
-
-					tmp = i;
-				}
+				currentIt = it;
 			}
 
-			indicies.emplace_back(tmp);
-
-			int res = indicies.at(rng() % indicies.size());
-
-			it->setPos(it->getPos() + Point(dx[res], dy[res]));
+			motionF = true;
 		}
 
 		else {
 
-			int res, min = 11;
-
-			for (int i : indicies) {
-
-				int tmp = searchOpp(it->getPos() + Point(dx[i], dy[i]));
-
-				if (min > tmp) {
-
-					min = tmp;
-
-					res = i;
-				}
-			}
-
-			it->setPos(it->getPos() + Point(dx[res], dy[res]));
+			if (motion(prev, currentIt->getPos(),Turn::Com))
+				turn = Turn::Player;
 		}
-
-		turn = Turn::Player;
 	}
 
 	void draw() const override {
 
-		DrawGhost::draw(Turn::Player, removedlist);
+		for (const auto& x : removedlist)
+			DrawGhost::draw(Turn::Player, x);
 
-		DrawGhost::draw(Turn::Com, list);
+		for (const auto& x : list) {
+			if (!motionF || motionF && (x.getPos() != currentIt->getPos()))
+				DrawGhost::draw(Turn::Com, x);
+		}
 	}
 
 	Goal getGoal() const { return goal; }
