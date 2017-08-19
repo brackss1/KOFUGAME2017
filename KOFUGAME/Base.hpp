@@ -22,7 +22,9 @@ enum class State
 enum class Turn
 {
 	Player,
-	Com
+	Com,
+	PlayerToCom,
+	ComToPlayer
 };
 
 class Scene {

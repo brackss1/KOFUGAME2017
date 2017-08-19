@@ -8,9 +8,9 @@ using Goal = std::array<Point, 2>;
 
 bool motionG(double& T, const Point& _pos, const Point& _next, Turn _turn, GhostFlag _flag = GhostFlag::Good) {
 
-	T -= 1;
+	T -= 0.5;
 
-	if (T == 0.0)
+	if (T <= 0.0)
 		return true;
 
 	Vec2 vec = (DrawGhost::getRealPos(_next) - DrawGhost::getRealPos(_pos)) / 30.0;
@@ -36,9 +36,11 @@ protected:
 
 	int good, bad;
 
-	GhostList list, removedlist;
+	GhostList list, removedlist, opponent;
 
 	Font font{ 20 };
+
+	Optional<std::pair<Point, Point>> opt;
 	
 public:
 
@@ -61,11 +63,13 @@ public:
 
 	virtual void draw() const = 0;
 
-	Optional<std::pair<Point,Point>> clearPiece(const GhostList& opponent) {
+protected:
 
-		Optional<std::pair<Point,Point>> opt = none;
+	Optional<std::pair<Point, Point>> clearPiece() {
 
-		list.erase(std::remove_if(list.begin(), list.end(), [this,&opponent,&opt](const GhostInfo& info) {
+		Optional<std::pair<Point, Point>> opt = none;
+
+		list.erase(std::remove_if(list.begin(), list.end(), [this, &opt](const GhostInfo& info) {
 
 			for (auto&& x : opponent) {
 				if (info.getPos() == x.getPos()) {
@@ -95,8 +99,6 @@ public:
 
 		return opt;
 	}
-
-protected:
 
 	bool checkKey(const Point& _pos) {
 

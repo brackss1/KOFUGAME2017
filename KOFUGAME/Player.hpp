@@ -16,7 +16,11 @@ class Player : public Member {
 
 public:
 
-	void init() {
+	void init(const GhostList& _list) {
+
+		opponent = _list;
+
+		opt = clearPiece();
 
 		currentIt = list.begin();
 
@@ -54,36 +58,59 @@ public:
 
 	void update() override {
 
-		if (!motionF) {
-			if (KeyZ.down()) {
+		if (!opt.has_value()) {
 
-				prev = currentIt->getPos();
+			if (!motionF) {
+				if (KeyZ.down()) {
 
-				moveFlag = true;
+					prev = currentIt->getPos();
+
+					moveFlag = true;
+				}
+
+				else if (KeyX.down())
+					moveFlag = false;
+
+				if (moveFlag) {
+					if (moveGhost())
+						motionF = true;
+				}
+				else
+					selectGhost();
 			}
 
-			else if (KeyX.down())
-				moveFlag = false;
+			else {
 
-			if (moveFlag) {
-				if (moveGhost())
-					motionF = true;
+				if (motion(prev, currentIt->getPos(), Turn::Player, currentIt->getFlag())) {
+
+					turn = Turn::PlayerToCom;
+
+					motionF = false;
+				}
 			}
-			else
-				selectGhost();
 		}
 
 		else {
 
-			if (motion(prev, currentIt->getPos(), Turn::Player, currentIt->getFlag()))
-				turn = Turn::Com;
+			if (motionG(motionT, opt->first, opt->second, Turn::Player,
+				removedlist.back().getFlag())) {
+
+				opt = none;
+
+				motionF = false;
+
+				motionT = 30;
+			}
 		}
 	}
 
 	void draw() const override {
 
-		for (const auto& x : removedlist)
-			DrawGhost::draw(Turn::Player, x);
+		for (int i = 0; i < removedlist.size(); ++i) {
+
+			if (!opt.has_value() || i != removedlist.size() - 1)
+				DrawGhost::draw(Turn::Player, removedlist[i]);
+		}
 
 		for (const auto& x : list) {
 			if (!motionF || (motionF&&x.getPos() != currentIt->getPos()))
@@ -93,25 +120,28 @@ public:
 		for (const auto& x : goal)
 			gFont(L"Å™").drawAt(DrawGhost::getRealPos(x), Color(255, 0, 0, 100));
 
-		if (moveFlag) {
+		if (!motionF&&turn==Turn::Player) {
 
-			for (int i = 0; i < 4; ++i) {
-				if (currentIt->getKeyConfig()[i])
-					RectF(blockSize)
-					.setCenter(DrawGhost::getRealPos(currentIt->getPos() + Point(dx[i], dy[i])))
-					.drawFrame(5, 0, Palette::Yellow);
+			if (moveFlag) {
+
+				for (int i = 0; i < 4; ++i) {
+					if (currentIt->getKeyConfig()[i])
+						RectF(blockSize)
+						.setCenter(DrawGhost::getRealPos(currentIt->getPos() + Point(dx[i], dy[i])))
+						.drawFrame(5, 0, Palette::Yellow);
+				}
 			}
+
+			if (moveFlag&&moveKey != -1) {
+
+				RectF(blockSize)
+					.setCenter(DrawGhost::getRealPos(currentIt->getPos() + Point(dx[moveKey], dy[moveKey])))
+					.drawFrame(5, 0, Palette::Greenyellow);
+			}
+
+			Circle(DrawGhost::getRealPos(currentIt->getPos()), blockSize / 2)
+				.drawFrame(5, 0, (moveFlag) ? Palette::Greenyellow : Palette::Yellow);
 		}
-
-		if (moveFlag&&moveKey != -1) {
-
-			RectF(blockSize)
-				.setCenter(DrawGhost::getRealPos(currentIt->getPos() + Point(dx[moveKey], dy[moveKey])))
-				.drawFrame(5, 0, Palette::Greenyellow);
-		}
-
-		Circle(DrawGhost::getRealPos(currentIt->getPos()), blockSize / 2)
-			.drawFrame(5, 0, (moveFlag) ? Palette::Greenyellow : Palette::Yellow);
 
 	}
 

@@ -8,17 +8,15 @@ class Com : public Member {
 
 	static const Goal goal;
 
-	GhostList opponent;
-
 public:
 
 	void init(const GhostList& _list) {
 
-		motionF = false;
-
 		motionT = 30;
 
 		opponent = _list;
+
+		opt = clearPiece();
 
 		KeyConfig tmp;
 
@@ -100,120 +98,140 @@ public:
 
 	void update() override {
 
-		if (!motionF) {
+		if (!opt.has_value()) {
 
-			std::vector<GhostList::iterator> vec;
+			if (!motionF) {
 
-			for (auto it = list.begin(); it != list.end(); ++it) {
+				std::vector<GhostList::iterator> vec;
 
-				if (checkUsableGhost(it->getKeyConfig()))
-					vec.emplace_back(it);
-			}
+				for (auto it = list.begin(); it != list.end(); ++it) {
 
-			auto it = vec.at(rng() % vec.size());
+					if (checkUsableGhost(it->getKeyConfig()))
+						vec.emplace_back(it);
+				}
 
-			std::vector<int> indicies;
+				auto it = vec.at(rng() % vec.size());
 
-			for (int i = 0; i < 4; ++i) {
+				std::vector<int> indicies;
 
-				Point p = it->getPos() + Point(dx[i], dy[i]);
+				for (int i = 0; i < 4; ++i) {
 
-				if (checkKey(p) &&
-					0 <= p.x&&p.x < 6 &&
-					0 <= p.y&&p.y < 6)
-					indicies.emplace_back(i);
-			}
+					Point p = it->getPos() + Point(dx[i], dy[i]);
 
-			for (const auto& x : opponent) {
-				if (x.getFlag() == GhostFlag::Good) {
-					for (int i : indicies) {
-						if (it->getPos() + Point(dx[i], dy[i]) == x.getPos()) {
+					if (checkKey(p) &&
+						0 <= p.x&&p.x < 6 &&
+						0 <= p.y&&p.y < 6)
+						indicies.emplace_back(i);
+				}
 
-							it->setPos(it->getPos() + Point(dx[i], dy[i]));
+				for (const auto& x : opponent) {
+					if (x.getFlag() == GhostFlag::Good) {
+						for (int i : indicies) {
+							if (it->getPos() + Point(dx[i], dy[i]) == x.getPos()) {
 
-							return;
+								it->setPos(it->getPos() + Point(dx[i], dy[i]));
+
+								return;
+							}
+						}
+					}
+					else {
+						for (int i : indicies) {
+							if (it->getPos() + Point(dx[i], dy[i]) == x.getPos() && rng() % 4 != 0) {
+
+								it->setPos(it->getPos() + Point(dx[i], dy[i]));
+
+								return;
+							}
 						}
 					}
 				}
+
+				if (it->getFlag() == GhostFlag::Good) {
+
+					int tmp, dis = 11;
+
+					for (int i : indicies) {
+
+						if (dis > std::min(disTo(it->getPos() + Point(dx[i], dy[i]), goal[0]),
+							disTo(it->getPos() + Point(dx[i], dy[i]), goal[1]))) {
+
+							dis = std::min(disTo(it->getPos() + Point(dx[i], dy[i]), goal[0]),
+								disTo(it->getPos() + Point(dx[i], dy[i]), goal[1]));
+
+							tmp = i;
+						}
+					}
+
+					indicies.emplace_back(tmp);
+
+					int res = indicies.at(rng() % indicies.size());
+
+					prev = it->getPos();
+
+					it->setPos(it->getPos() + Point(dx[res], dy[res]));
+
+					currentIt = it;
+				}
+
 				else {
+
+					int res, min = 11;
+
 					for (int i : indicies) {
-						if (it->getPos() + Point(dx[i], dy[i]) == x.getPos() && rng() % 4 != 0) {
 
-							it->setPos(it->getPos() + Point(dx[i], dy[i]));
+						int tmp = searchOpp(it->getPos() + Point(dx[i], dy[i]));
 
-							return;
+						if (min > tmp) {
+
+							min = tmp;
+
+							res = i;
 						}
 					}
+
+					prev = it->getPos();
+
+					it->setPos(it->getPos() + Point(dx[res], dy[res]));
+
+					currentIt = it;
 				}
-			}
-
-			if (it->getFlag() == GhostFlag::Good) {
-
-				int tmp, dis = 11;
-
-				for (int i : indicies) {
-
-					if (dis > std::min(disTo(it->getPos() + Point(dx[i], dy[i]), goal[0]),
-						disTo(it->getPos() + Point(dx[i], dy[i]), goal[1]))) {
-
-						dis = std::min(disTo(it->getPos() + Point(dx[i], dy[i]), goal[0]),
-							disTo(it->getPos() + Point(dx[i], dy[i]), goal[1]));
-
-						tmp = i;
-					}
-				}
-
-				indicies.emplace_back(tmp);
-
-				int res = indicies.at(rng() % indicies.size());
-
-				prev = it->getPos();
-
-				it->setPos(it->getPos() + Point(dx[res], dy[res]));
-
-				currentIt = it;
+				motionF = true;
 			}
 
 			else {
 
-				int res, min = 11;
+				if (motion(prev, currentIt->getPos(), Turn::Com)) {
 
-				for (int i : indicies) {
+					turn = Turn::ComToPlayer;
 
-					int tmp = searchOpp(it->getPos() + Point(dx[i], dy[i]));
-
-					if (min > tmp) {
-
-						min = tmp;
-
-						res = i;
-					}
+					motionF = false;
 				}
-
-				prev = it->getPos();
-
-				it->setPos(it->getPos() + Point(dx[res], dy[res]));
-
-				currentIt = it;
 			}
-
-			motionF = true;
 		}
 
 		else {
 
-			if (motion(prev, currentIt->getPos(),Turn::Com))
-				turn = Turn::Player;
+			if (motionG(motionT, opt->first, opt->second, Turn::Com,
+				removedlist.back().getFlag())) {
+
+				opt = none;
+
+				motionT = 30;
+			}
 		}
 	}
 
 	void draw() const override {
 
-		for (const auto& x : removedlist)
-			DrawGhost::draw(Turn::Player, x);
+		for (int i = 0; i < removedlist.size(); ++i) {
+
+			if (!opt.has_value() || i != removedlist.size() - 1)
+				DrawGhost::draw(Turn::Player, removedlist[i]);
+		}
 
 		for (const auto& x : list) {
-			if (!motionF || motionF && (x.getPos() != currentIt->getPos()))
+			if (!motionF || x.getPos() != currentIt->getPos())
 				DrawGhost::draw(Turn::Com, x);
 		}
 	}
