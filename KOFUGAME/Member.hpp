@@ -6,37 +6,29 @@ constexpr int dx[] = { -1,0,1,0 }, dy[] = { 0,-1,0,1 };
 
 using Goal = std::array<Point, 2>;
 
-bool motionG(double& T, const Point& _pos, const Point& _next, Turn _turn, GhostFlag _flag = GhostFlag::Good) {
+enum class Phase {
 
-	T -= 0.5;
-
-	if (T <= 0.0)
-		return true;
-
-	Vec2 vec = (DrawGhost::getRealPos(_next) - DrawGhost::getRealPos(_pos)) / 30.0;
-
-	((_turn == Turn::Com) ? DrawGhost::getTextureWhite() :
-		(_flag == GhostFlag::Good) ? DrawGhost::getTextureBlue() : DrawGhost::getTextureRed())
-		.drawAt(DrawGhost::getRealPos(_pos) + vec*(30 - T));
-
-	return false;
-}
+	Clear,
+	Select,
+	Move,
+	Motion,
+};
 
 class Member {
 
 protected:
 
+	Phase phase;
+
 	GhostList::iterator currentIt;
 
 	Point prev;
-
-	bool motionF;
 
 	double motionT;
 
 	int good, bad;
 
-	GhostList list, removedlist, opponent;
+	GhostList list, removedlist;
 
 	Font font{ 20 };
 
@@ -59,26 +51,54 @@ public:
 		return std::make_pair(good, bad);
 	}
 
-	virtual void update() = 0;
+	void update() {
+
+		switch (phase) {
+
+		case Phase::Clear:
+
+			clear();
+
+			break;
+
+		case Phase::Select:
+
+			select();
+
+			break;
+
+		case Phase::Move:
+
+			move();
+
+			break;
+
+		case Phase::Motion:
+
+			motion();
+
+			break;
+		}
+	}
 
 	virtual void draw() const = 0;
 
 protected:
 
-	Optional<std::pair<Point, Point>> clearPiece() {
+	Optional<std::pair<Point, Point>> clearPiece(const GhostList& _opp) {
 
-		Optional<std::pair<Point, Point>> opt = none;
+		Optional<std::pair<Point, Point>> _opt = none;
 
-		list.erase(std::remove_if(list.begin(), list.end(), [this, &opt](const GhostInfo& info) {
+		list.erase(std::remove_if(list.begin(), list.end(), [this, &_opt,&_opp](const GhostInfo& info) {
 
-			for (auto&& x : opponent) {
+			for (auto&& x : _opp) {
 				if (info.getPos() == x.getPos()) {
 
 					Point _pos = nextGarbagePos();
 
 					removedlist.emplace_back(_pos, info.getFlag());
 
-					opt = std::make_pair(x.getPos(), _pos);
+					_opt = std::make_pair(x.getPos(), _pos);
 
 					return true;
 				}
@@ -97,7 +117,7 @@ protected:
 				++bad;
 		}
 
-		return opt;
+		return _opt;
 	}
 
 	bool checkKey(const Point& _pos) {
@@ -115,14 +135,32 @@ protected:
 		return _config[0] || _config[1] || _config[2] || _config[3];
 	}
 
-	bool motion(const Point& _pos, const Point& _next, Turn _turn, GhostFlag _flag = GhostFlag::Good) {
+	bool motionG(const Point& _pos, const Point& _next, Turn _turn, GhostFlag _flag = GhostFlag::Good) {
+		motionT -= 0.5;
 
-		return motionG(motionT, _pos, _next, _turn, _flag);
+		if (motionT <= 0.0)
+			return true;
+
+		Vec2 vec = (DrawGhost::getRealPos(_next) - DrawGhost::getRealPos(_pos)) / 30.0;
+
+		((_turn == Turn::Com) ? DrawGhost::getTextureWhite() :
+			(_flag == GhostFlag::Good) ? DrawGhost::getTextureBlue() : DrawGhost::getTextureRed())
+			.drawAt(DrawGhost::getRealPos(_pos) + vec*(30 - motionT));
+
+		return false;
 	}
 
 private:
 
 	virtual Point nextGarbagePos() const = 0;
+
+	virtual void select() = 0;
+
+	virtual void move() = 0;
+
+	virtual void motion() = 0;
+
+	virtual void clear() = 0;
 };
 
 Turn turn;

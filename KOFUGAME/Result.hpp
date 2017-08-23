@@ -4,7 +4,7 @@
 
 class Result : public Scene {
 
-	Font font{ 120 };
+	Font font;
 
 	double s;
 
@@ -13,6 +13,8 @@ public:
 	void init() override {
 
 		s = 5.0;
+
+		font = Font(Window::Height() / 4);
 	}
 
 	void draw() const override{

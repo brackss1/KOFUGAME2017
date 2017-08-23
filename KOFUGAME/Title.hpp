@@ -8,7 +8,7 @@ class Title : public Scene {
 
 	Texture texture{ L"pictures/titleback.png" };
 
-	const Font font{ 120, Typeface::Light, FontStyle::Bold };
+	const Font font{ Window::Height() / 4, Typeface::Light, FontStyle::Bold };
 
 	double s;
 

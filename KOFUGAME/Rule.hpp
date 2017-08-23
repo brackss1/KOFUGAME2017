@@ -4,7 +4,7 @@
 
 class Rule : public Scene {
 
-	Font font{ 60 }, blue{ 20 }, red{ 20 };
+	Font font, blue{ 20 }, red{ 20 };
 
 	Point pos;
 
@@ -17,6 +17,12 @@ class Rule : public Scene {
 public:
 
 	void init() override {
+
+		font = Font(Window::Height() / 8);
+
+		blue = Font(Window::Height() / 24);
+
+		red = Font(Window::Height() / 24);
 
 		blueCnt = redCnt = 4;
 

@@ -8,15 +8,21 @@ class Com : public Member {
 
 	static const Goal goal;
 
+	GhostList opponent;
+
 public:
 
 	void init(const GhostList& _list) {
+
+		phase = Phase::Clear;
+
+		currentIt = list.begin();
 
 		motionT = 30;
 
 		opponent = _list;
 
-		opt = clearPiece();
+		opt = clearPiece(opponent);
 
 		KeyConfig tmp;
 
@@ -96,132 +102,6 @@ public:
 		}
 	}
 
-	void update() override {
-
-		if (!opt.has_value()) {
-
-			if (!motionF) {
-
-				std::vector<GhostList::iterator> vec;
-
-				for (auto it = list.begin(); it != list.end(); ++it) {
-
-					if (checkUsableGhost(it->getKeyConfig()))
-						vec.emplace_back(it);
-				}
-
-				auto it = vec.at(rng() % vec.size());
-
-				std::vector<int> indicies;
-
-				for (int i = 0; i < 4; ++i) {
-
-					Point p = it->getPos() + Point(dx[i], dy[i]);
-
-					if (checkKey(p) &&
-						0 <= p.x&&p.x < 6 &&
-						0 <= p.y&&p.y < 6)
-						indicies.emplace_back(i);
-				}
-
-				for (const auto& x : opponent) {
-					if (x.getFlag() == GhostFlag::Good) {
-						for (int i : indicies) {
-							if (it->getPos() + Point(dx[i], dy[i]) == x.getPos()) {
-
-								it->setPos(it->getPos() + Point(dx[i], dy[i]));
-
-								return;
-							}
-						}
-					}
-					else {
-						for (int i : indicies) {
-							if (it->getPos() + Point(dx[i], dy[i]) == x.getPos() && rng() % 4 != 0) {
-
-								it->setPos(it->getPos() + Point(dx[i], dy[i]));
-
-								return;
-							}
-						}
-					}
-				}
-
-				if (it->getFlag() == GhostFlag::Good) {
-
-					int tmp, dis = 11;
-
-					for (int i : indicies) {
-
-						if (dis > std::min(disTo(it->getPos() + Point(dx[i], dy[i]), goal[0]),
-							disTo(it->getPos() + Point(dx[i], dy[i]), goal[1]))) {
-
-							dis = std::min(disTo(it->getPos() + Point(dx[i], dy[i]), goal[0]),
-								disTo(it->getPos() + Point(dx[i], dy[i]), goal[1]));
-
-							tmp = i;
-						}
-					}
-
-					indicies.emplace_back(tmp);
-
-					int res = indicies.at(rng() % indicies.size());
-
-					prev = it->getPos();
-
-					it->setPos(it->getPos() + Point(dx[res], dy[res]));
-
-					currentIt = it;
-				}
-
-				else {
-
-					int res, min = 11;
-
-					for (int i : indicies) {
-
-						int tmp = searchOpp(it->getPos() + Point(dx[i], dy[i]));
-
-						if (min > tmp) {
-
-							min = tmp;
-
-							res = i;
-						}
-					}
-
-					prev = it->getPos();
-
-					it->setPos(it->getPos() + Point(dx[res], dy[res]));
-
-					currentIt = it;
-				}
-				motionF = true;
-			}
-
-			else {
-
-				if (motion(prev, currentIt->getPos(), Turn::Com)) {
-
-					turn = Turn::ComToPlayer;
-
-					motionF = false;
-				}
-			}
-		}
-
-		else {
-
-			if (motionG(motionT, opt->first, opt->second, Turn::Com,
-				removedlist.back().getFlag())) {
-
-				opt = none;
-
-				motionT = 30;
-			}
-		}
-	}
-
 	void draw() const override {
 
 		for (int i = 0; i < removedlist.size(); ++i) {
@@ -231,7 +111,7 @@ public:
 		}
 
 		for (const auto& x : list) {
-			if (!motionF || x.getPos() != currentIt->getPos())
+			if (phase!=Phase::Motion || x.getPos() != currentIt->getPos())
 				DrawGhost::draw(Turn::Com, x);
 		}
 	}
@@ -293,6 +173,155 @@ private:
 			}
 		}
 		return INF;
+	}
+
+	void clear() override {
+
+		if (!opt.has_value())
+			phase = Phase::Select;
+
+		else {
+
+			if (motionG(opt->first, opt->second, Turn::Com)) {
+
+				opt = none;
+
+				motionT = 30;
+			}
+		}
+	}
+
+	void select() override{
+
+		std::vector<GhostList::iterator> vec;
+
+		for (auto it = list.begin(); it != list.end(); ++it) {
+
+			if (checkUsableGhost(it->getKeyConfig()))
+				vec.emplace_back(it);
+		}
+
+		std::sort(vec.begin(), vec.end(), [this](auto left,auto right) {
+
+			int lcnt = 0, rcnt = 0;
+
+			for (const auto& opp : opponent) {
+				for (int i = 0; i < 4; ++i) {
+					if (left->getPos() + Point(dx[i], dy[i]) == opp.getPos())
+						++lcnt;
+					else if (right->getPos() + Point(dx[i], dy[i]) == opp.getPos())
+						++rcnt;
+				}
+			}
+			return lcnt > rcnt;
+		});
+
+		std::uniform_int_distribution<> dist(0, std::min((int)vec.size(), 3));
+
+		currentIt = vec.at(dist(rng));
+
+		phase = Phase::Move;
+	}
+
+	void move() override {
+
+		std::vector<int> indicies;
+
+		for (int i = 0; i < 4; ++i) {
+
+			Point p = currentIt->getPos() + Point(dx[i], dy[i]);
+
+			if (checkKey(p) &&
+				0 <= p.x&&p.x < 6 &&
+				0 <= p.y&&p.y < 6)
+				indicies.emplace_back(i);
+		}
+
+		for (const auto& x : opponent) {
+			if (x.getFlag() == GhostFlag::Good) {
+				for (int i : indicies) {
+					if (currentIt->getPos() + Point(dx[i], dy[i]) == x.getPos()) {
+
+						prev = currentIt->getPos();
+
+						currentIt->setPos(currentIt->getPos() + Point(dx[i], dy[i]));
+
+						goto a;
+					}
+				}
+			}
+			else {
+				for (int i : indicies) {
+					if (currentIt->getPos() + Point(dx[i], dy[i]) == x.getPos() && rng() % 4 != 0) {
+
+						prev = currentIt->getPos();
+
+						currentIt->setPos(currentIt->getPos() + Point(dx[i], dy[i]));
+
+						goto a;
+					}
+				}
+			}
+		}
+
+		if (currentIt->getFlag() == GhostFlag::Good) {
+
+			int tmp, dis = 11;
+
+			for (int i : indicies) {
+
+				if (dis > std::min(disTo(currentIt->getPos() + Point(dx[i], dy[i]), goal[0]),
+					disTo(currentIt->getPos() + Point(dx[i], dy[i]), goal[1]))) {
+
+					dis = std::min(disTo(currentIt->getPos() + Point(dx[i], dy[i]), goal[0]),
+						disTo(currentIt->getPos() + Point(dx[i], dy[i]), goal[1]));
+
+					tmp = i;
+				}
+			}
+
+			indicies.emplace_back(tmp);
+
+			int res = indicies.at(rng() % indicies.size());
+
+			prev = currentIt->getPos();
+
+			currentIt->setPos(prev + Point(dx[res], dy[res]));
+		}
+
+		else {
+
+			int res, min = 11;
+
+			for (int i : indicies) {
+
+				int tmp = searchOpp(currentIt->getPos() + Point(dx[i], dy[i]));
+
+				if (min > tmp) {
+
+					min = tmp;
+
+					res = i;
+				}
+			}
+
+			prev = currentIt->getPos();
+
+			currentIt->setPos(prev + Point(dx[res], dy[res]));
+		}
+	a:;
+
+		phase = Phase::Motion;
+	}
+
+	void motion() override {
+		
+		if (motionG(prev, currentIt->getPos(), Turn::Com)) {
+
+			turn = Turn::ComToPlayer;
+
+			phase = Phase::Clear;
+		}
 	}
 };
 

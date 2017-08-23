@@ -6,8 +6,6 @@ class Player : public Member {
 
 	std::mt19937 rng;
 
-	bool moveFlag = false;
-
 	int moveKey;
 
 	static const Goal goal;
@@ -18,17 +16,13 @@ public:
 
 	void init(const GhostList& _list) {
 
-		opponent = _list;
+		phase = Phase::Clear;
 
-		opt = clearPiece();
+		opt = clearPiece(_list);
 
 		currentIt = list.begin();
 
-		motionF = false;
-
 		motionT = 30;
-
-		moveFlag = false;
 
 		moveKey = -1;
 
@@ -56,54 +50,6 @@ public:
 		}
 	}
 
-	void update() override {
-
-		if (!opt.has_value()) {
-
-			if (!motionF) {
-				if (KeyZ.down()) {
-
-					prev = currentIt->getPos();
-
-					moveFlag = true;
-				}
-
-				else if (KeyX.down())
-					moveFlag = false;
-
-				if (moveFlag) {
-					if (moveGhost())
-						motionF = true;
-				}
-				else
-					selectGhost();
-			}
-
-			else {
-
-				if (motion(prev, currentIt->getPos(), Turn::Player, currentIt->getFlag())) {
-
-					turn = Turn::PlayerToCom;
-
-					motionF = false;
-				}
-			}
-		}
-
-		else {
-
-			if (motionG(motionT, opt->first, opt->second, Turn::Player,
-				removedlist.back().getFlag())) {
-
-				opt = none;
-
-				motionF = false;
-
-				motionT = 30;
-			}
-		}
-	}
-
 	void draw() const override {
 
 		for (int i = 0; i < removedlist.size(); ++i) {
@@ -113,16 +59,16 @@ public:
 		}
 
 		for (const auto& x : list) {
-			if (!motionF || (motionF&&x.getPos() != currentIt->getPos()))
+			if (phase!=Phase::Motion || x.getPos() != currentIt->getPos())
 				DrawGhost::draw(Turn::Player, x);
 		}
 
 		for (const auto& x : goal)
 			gFont(L"Å™").drawAt(DrawGhost::getRealPos(x), Color(255, 0, 0, 100));
 
-		if (!motionF&&turn==Turn::Player) {
+		if ((phase == Phase::Select || phase == Phase::Move) && turn == Turn::Player) {
 
-			if (moveFlag) {
+			if (phase == Phase::Move) {
 
 				for (int i = 0; i < 4; ++i) {
 					if (currentIt->getKeyConfig()[i])
@@ -130,19 +76,18 @@ public:
 						.setCenter(DrawGhost::getRealPos(currentIt->getPos() + Point(dx[i], dy[i])))
 						.drawFrame(5, 0, Palette::Yellow);
 				}
-			}
 
-			if (moveFlag&&moveKey != -1) {
+				if (moveKey != -1) {
 
-				RectF(blockSize)
-					.setCenter(DrawGhost::getRealPos(currentIt->getPos() + Point(dx[moveKey], dy[moveKey])))
-					.drawFrame(5, 0, Palette::Greenyellow);
+					RectF(blockSize)
+						.setCenter(DrawGhost::getRealPos(currentIt->getPos() + Point(dx[moveKey], dy[moveKey])))
+						.drawFrame(5, 0, Palette::Greenyellow);
+				}
 			}
 
 			Circle(DrawGhost::getRealPos(currentIt->getPos()), blockSize / 2)
-				.drawFrame(5, 0, (moveFlag) ? Palette::Greenyellow : Palette::Yellow);
+				.drawFrame(5, 0, (phase == Phase::Move) ? Palette::Greenyellow : Palette::Yellow);
 		}
-
 	}
 
 	void setList(const GhostList& _list) {
@@ -160,10 +105,29 @@ public:
 
 private:
 
-	void selectGhost() {
+	Point nextGarbagePos() const override {
+
+		return Point(6, 5 - removedlist.size());
+	}
+
+	void clear() override{
+
+		if (!opt.has_value())
+			phase = Phase::Select;
+		else {
+			if (motionG(opt->first, opt->second, Turn::Player, removedlist.back().getFlag())) {
+
+				opt = none;
+
+				motionT = 30;
+			}
+		}
+	}
+
+	void select() override {
 
 		std::sort(list.begin(), list.end());
-		
+
 		int p = currentIt - list.begin();
 
 		if (KeyW.down()) {
@@ -179,7 +143,7 @@ private:
 			p = std::upper_bound(list.begin(), list.end(),
 				GhostInfo(Point(currentIt->getPos().x, currentIt->getPos().y + 1), GhostFlag::Bad)) - list.begin() - 1;
 
-			for (; p <list.size() && !checkUsableGhost((list.begin() + p)->getKeyConfig()); ++p);
+			for (; p < list.size() && !checkUsableGhost((list.begin() + p)->getKeyConfig()); ++p);
 		}
 
 		else if (KeyA.down())
@@ -195,9 +159,19 @@ private:
 			p = list.size() - 1;
 
 		currentIt = list.begin() + p;
+
+		if (KeyZ.down()) {
+
+			prev = currentIt->getPos();
+
+			phase = Phase::Move;
+		}
 	}
 
-	bool moveGhost() {
+	void move() override {
+
+		if (KeyX.down())
+			phase = Phase::Select;
 
 		if (currentIt->getKeyConfig()[1] && KeyW.down())
 			moveKey = 1;
@@ -212,15 +186,18 @@ private:
 
 			currentIt->setPos(currentIt->getPos() + Point(dx[moveKey], dy[moveKey]));
 
-			return true;
+			phase = Phase::Motion;
 		}
-
-		return false;
 	}
 
-	Point nextGarbagePos() const override {
+	void motion() override {
 
-		return Point(6, 5 - removedlist.size());
+		if (motionG(prev, currentIt->getPos(), Turn::Player, currentIt->getFlag())) {
+
+			turn = Turn::PlayerToCom;
+
+			phase = Phase::Clear;
+		}
 	}
 };
 

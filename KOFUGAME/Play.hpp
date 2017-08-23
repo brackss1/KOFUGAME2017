@@ -12,15 +12,27 @@ class Play : public Scene {
 
 	Com com;
 
+	Font font;
+
+	double motionT;
+
+	double s;
+
 public:
 
 	void init() override {
+
+		font = Font(Window::Height()/8);
+
+		motionT = 0;
 
 		player.setList(userGhostList);
 
 		com.setList();
 
 		player.init(com.getList());
+
+		com.init(player.getList());
 
 		turn = Turn::Player;
 	}
@@ -52,17 +64,41 @@ public:
 
 		case Turn::ComToPlayer:
 
-			player.init(com.getList());
+			if (motionT<=0) {
 
-			turn = Turn::Player;
+				player.init(com.getList());
+
+				turn = Turn::Player;
+
+				motionT = 0;
+			}
+
+			else {
+
+				font(L"PlayerTurn").drawAt(Window::Width() / 20 * (20-motionT), Window::Center().y, Palette::White);
+
+				motionT -= 0.3;
+			}
 
 			break;
 
 		case Turn::PlayerToCom:
 
-			com.init(player.getList());
+			if (motionT <= 0) {
 
-			turn = Turn::Com;
+				com.init(player.getList());
+
+				turn = Turn::Com;
+
+				motionT = 0;
+			}
+
+			else {
+
+				font(L"ComTurn").drawAt(Window::Width() / 20 * (20-motionT), Window::Center().y, Palette::White);
+
+				motionT -= 0.3;
+			}
 
 			break;
 		}
