@@ -4,7 +4,6 @@
 #include "Ai.hpp"
 #include "View.hpp"
 #include "Model.hpp"
-#include <iostream>
 
 class Play : public Scene {
 

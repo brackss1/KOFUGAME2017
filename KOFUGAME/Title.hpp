@@ -40,7 +40,7 @@ public:
 
 		//texture.drawAt(Window::Center());
 
-		font(L"Geister").drawAt(Window::Center(),Palette::Bisque);
+		font(L"Geister").drawAt(Window::Center(),Palette::Whitesmoke);
 	}
 
 private:

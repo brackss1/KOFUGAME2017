@@ -16,7 +16,6 @@ void Main() {
 
 	Game::init();
 
-
 	while (System::Update())
 	{
 		Game::update();

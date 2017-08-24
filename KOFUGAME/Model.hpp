@@ -13,6 +13,8 @@ public:
 
 	static void init() {
 
+		Window::SetTitle(L"Geister");
+
 		state = State::Title;
 
 		scenes.at(state)->init();

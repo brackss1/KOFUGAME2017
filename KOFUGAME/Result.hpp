@@ -12,7 +12,7 @@ public:
 
 	void init() override {
 
-		s = 5.0;
+		s = 3.14 * 5;
 
 		font = Font(Window::Height() / 4);
 	}
@@ -20,9 +20,9 @@ public:
 	void draw() const override{
 
 		if (winner == Turn::Player)
-			font(L"You win!").drawAt(Window::Center(), Palette::Gold);
+			font(L"You win!").drawAt(Window::Center(), Palette::Whitesmoke);
 		else
-			font(L"You lose!").drawAt(Window::Center(), Palette::Gold);
+			font(L"You lose!").drawAt(Window::Center(), Palette::Whitesmoke);
 	}
 
 	void update() override{

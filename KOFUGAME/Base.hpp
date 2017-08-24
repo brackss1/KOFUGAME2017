@@ -9,7 +9,7 @@
 #include <random>
 #include <type_traits>
 #include <queue>
-#include <optional>
+#include <functional>
 
 enum class State
 {
