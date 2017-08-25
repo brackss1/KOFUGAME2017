@@ -130,7 +130,7 @@ private:
 
 		int p = currentIt - list.begin();
 
-		if (KeyW.down()) {
+		if (KeyUp.down()) {
 
 			p = std::lower_bound(list.begin(), list.end(),
 				GhostInfo(Point(currentIt->getPos().x, currentIt->getPos().y - 1), GhostFlag::Bad)) - list.begin();
@@ -138,7 +138,7 @@ private:
 			for (; p >= 0 && !checkUsableGhost((list.begin() + p)->getKeyConfig()); --p);
 		}
 
-		else if (KeyS.down()) {
+		else if (KeyDown.down()) {
 
 			p = std::upper_bound(list.begin(), list.end(),
 				GhostInfo(Point(currentIt->getPos().x, currentIt->getPos().y + 1), GhostFlag::Bad)) - list.begin() - 1;
@@ -146,10 +146,10 @@ private:
 			for (; p < list.size() && !checkUsableGhost((list.begin() + p)->getKeyConfig()); ++p);
 		}
 
-		else if (KeyA.down())
+		else if (KeyLeft.down())
 			for (--p; p >= 0 && !checkUsableGhost((list.begin() + p)->getKeyConfig()); --p);
 
-		else if (KeyD.down())
+		else if (KeyRight.down())
 			for (++p; p < list.size() && !checkUsableGhost((list.begin() + p)->getKeyConfig()); ++p);
 
 		if (p < 0)
@@ -173,13 +173,13 @@ private:
 		if (KeyX.down())
 			phase = Phase::Select;
 
-		if (currentIt->getKeyConfig()[1] && KeyW.down())
+		if (currentIt->getKeyConfig()[1] && KeyUp.down())
 			moveKey = 1;
-		else if (currentIt->getKeyConfig()[3] && KeyS.down())
+		else if (currentIt->getKeyConfig()[3] && KeyDown.down())
 			moveKey = 3;
-		else if (currentIt->getKeyConfig()[2] && KeyD.down())
+		else if (currentIt->getKeyConfig()[2] && KeyRight.down())
 			moveKey = 2;
-		else if (currentIt->getKeyConfig()[0] && KeyA.down())
+		else if (currentIt->getKeyConfig()[0] && KeyLeft.down())
 			moveKey = 0;
 
 		if (moveKey != -1 && KeyZ.down()) {

@@ -21,7 +21,7 @@ public:
 
 	void init() override {
 
-		font = Font(Window::Height()/8);
+		font = Font(Window::Height() / 8);
 
 		motionT = 0;
 
@@ -168,5 +168,4 @@ private:
 			Game::changeScene(State::Result);
 		}
 	}
-
 };

@@ -5,7 +5,7 @@
 
 class Game {
 
-	static std::unordered_map<State, std::unique_ptr<Scene>> scenes;
+	static std::unordered_map<State, std::shared_ptr<Scene>> scenes;
 
 	static State state;
 
@@ -44,10 +44,10 @@ public:
 	template<class T>
 	static auto addScene(State _state) -> std::enable_if_t<std::is_base_of_v<Scene,T>> {
 
-		scenes.emplace(_state, std::make_unique<T>());
+		scenes.emplace(_state, std::make_shared<T>());
 	}
 };
 
 State Game::state;
 
-std::unordered_map<State, std::unique_ptr<Scene>> Game::scenes;
+std::unordered_map<State, std::shared_ptr<Scene>> Game::scenes;

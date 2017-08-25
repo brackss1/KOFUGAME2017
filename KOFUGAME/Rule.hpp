@@ -45,13 +45,13 @@ public:
 
 	void update() override {
 
-		if (KeyW.down())
+		if (KeyUp.down())
 			--pos.y;
-		else if (KeyS.down())
+		else if (KeyDown.down())
 			++pos.y;
-		else if (KeyA.down())
+		else if (KeyLeft.down())
 			--pos.x;
-		else if(KeyD.down())
+		else if(KeyRight.down())
 			++pos.x;
 
 		if (pos.x < 1)

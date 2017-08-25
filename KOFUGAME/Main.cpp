@@ -4,6 +4,7 @@
 #include "Play.hpp"
 #include "Result.hpp"
 
+
 void Main() {
 
 	Game::addScene<Title>(State::Title);
@@ -22,4 +23,5 @@ void Main() {
 
 		Game::draw();
 	}
+
 }
