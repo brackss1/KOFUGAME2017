@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Siv3D.hpp>
 #include <vector>
 #include <algorithm>
 #include <array>
@@ -14,6 +13,7 @@
 enum class State
 {
 	Title,
+	Exp,
 	Rule,
 	Play,
 	Result

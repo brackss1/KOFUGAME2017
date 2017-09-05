@@ -9,6 +9,8 @@ void Main() {
 
 	Game::addScene<Title>(State::Title);
 
+	Game::addScene<Exp>(State::Exp);
+
 	Game::addScene<Rule>(State::Rule);
 
 	Game::addScene<Play>(State::Play);

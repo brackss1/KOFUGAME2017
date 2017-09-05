@@ -190,5 +190,8 @@
     <ClInclude Include="Rule.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Exp.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

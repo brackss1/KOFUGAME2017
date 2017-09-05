@@ -31,7 +31,7 @@ public:
 		if (s > 1.0)
 			s -= ease();
 		else if (KeyZ.down())
-			Game::changeScene(State::Rule);
+			Game::changeScene(State::Exp);
 
 		Graphics2D::SetTransform(Mat3x2::Scale(s, Window::Center()));
 	}

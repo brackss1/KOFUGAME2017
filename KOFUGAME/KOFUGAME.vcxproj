@@ -223,6 +223,7 @@
   <ItemGroup>
     <ClInclude Include="Ai.hpp" />
     <ClInclude Include="Base.hpp" />
+    <ClInclude Include="Exp.hpp" />
     <ClInclude Include="Member.hpp" />
     <ClInclude Include="Model.hpp" />
     <ClInclude Include="Play.hpp" />
